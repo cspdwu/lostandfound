@@ -3,240 +3,269 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบตรวจสอบข้อมูลของหายได้คืน</title>
+    <title>ของหายได้คืน ม.วลัยลักษณ์</title>
     
-    <!-- Tailwind CSS for styling -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- SweetAlert2 for modals -->
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font: Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
-        /* Use Kanit font for the entire page */
-        body {
-            font-family: 'Kanit', sans-serif;
-            background-color: #f0f4f8; /* Pastel blue-gray background */
-        }
-        /* Style for the card image to ensure it covers the area */
-        .card-img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-        /* Simple loading spinner */
-        .loader {
-            border: 8px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 8px solid #3498db;
-            width: 60px;
-            height: 60px;
-            animation: spin 2s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        body { font-family: 'Kanit', sans-serif; background-color: #f8fafc; }
+        .card-img-container { height: 220px; overflow: hidden; background-color: #e2e8f0; position: relative; }
+        .card-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+        .card:hover .card-img { transform: scale(1.05); }
+        
+        /* Filter Button Active States */
+        .btn-filter.active { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .btn-all.active { background-color: #3b82f6; color: white; border-color: #3b82f6; }
+        .btn-found.active { background-color: #10b981; color: white; border-color: #10b981; }
+        .btn-lost.active { background-color: #f43f5e; color: white; border-color: #f43f5e; }
     </style>
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-50 min-h-screen flex flex-col">
 
-    <div class="container mx-auto p-4 md:p-8">
-        
-        <!-- Header -->
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-slate-800">ของหายได้คืน</h1>
-            <p class="text-slate-500 mt-2">รายการสิ่งของที่มีผู้นำมามอบ</p>
-        </header>
-
-        <!-- Loading Indicator -->
-        <div id="loading" class="flex justify-center items-center h-64">
-             <div class="text-center">
-                <div class="loader mx-auto"></div>
-                <p class="text-slate-500 mt-4">กำลังโหลดข้อมูล...</p>
+    <!-- Navbar / Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between">
+            <div class="flex items-center gap-3 mb-4 md:mb-0">
+                <!-- Logo Placeholder (Optional) -->
+                <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl">W</div>
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800 leading-none">ของหายได้คืน</h1>
+                    <p class="text-sm text-slate-500">ม.วลัยลักษณ์ (Walailak University)</p>
+                </div>
+            </div>
+            
+            <!-- Filter Buttons -->
+            <div class="flex flex-wrap justify-center gap-2">
+                <button onclick="filterItems('all')" id="btn-all" class="btn-filter btn-all active px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-blue-50 transition text-sm font-medium">
+                    ทั้งหมด
+                </button>
+                
+                <!-- ปุ่มที่ 1: กรอง "แจ้งพบสิ่งของ" -->
+                <button onclick="filterItems('แจ้งพบสิ่งของ')" id="btn-found" class="btn-filter btn-found px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-emerald-50 transition text-sm font-medium flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span> สิ่งของที่มีผู้นำมามอบ
+                </button>
+                
+                <!-- ปุ่มที่ 2: กรอง "ตามหาสิ่งของสูญหาย" -->
+                <button onclick="filterItems('ตามหาสิ่งของสูญหาย')" id="btn-lost" class="btn-filter btn-lost px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-rose-50 transition text-sm font-medium flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span> ตามหาสิ่งของสูญหาย
+                </button>
             </div>
         </div>
+    </header>
 
-        <!-- Items Container -->
-        <div id="items-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <!-- Item cards will be inserted here by JavaScript -->
-        </div>
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 flex-grow">
         
-        <!-- No Items Message -->
-        <div id="no-items" class="hidden text-center py-16">
-            <p class="text-slate-500 text-lg">ไม่พบข้อมูลของหายในขณะนี้</p>
+        <!-- Loading State -->
+        <div id="loading" class="flex flex-col items-center justify-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
+            <p class="text-slate-400 animate-pulse">กำลังโหลดข้อมูล...</p>
         </div>
 
-    </div>
+        <!-- Grid Container -->
+        <div id="items-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 hidden">
+            <!-- Cards will be injected here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-20">
+            <div class="inline-block p-4 rounded-full bg-slate-100 mb-4">
+                <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+            </div>
+            <p class="text-slate-500 text-lg">ไม่พบข้อมูลในหมวดหมู่นี้</p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t py-6 text-center text-slate-400 text-sm">
+        <p>© ระบบของหายได้คืน มหาวิทยาลัยวลัยลักษณ์</p>
+    </footer>
 
     <script>
-        // !!! CORRECTED !!!
-        // The URL is now in the correct variable.
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNu8-M4CUl3uYgEumidpl-9bLV0rJRS4bPGfWVJAGU8IepbEBDy2ObDIGF-hbUwLdG/exec';
+        // ------------------------------------------------------
+        // 1. ตั้งค่า URL (สำคัญ: ใส่ URL ที่ได้จากการ Deploy ตรงนี้)
+        // ------------------------------------------------------
+        const SCRIPT_URL = 'YOUR_DEPLOYED_WEB_APP_URL_HERE'; 
 
-        // Store data globally to access it for the modal
-        let itemsData = [];
+        let allItems = []; // ตัวแปรเก็บข้อมูลทั้งหมด
 
-        // 1. Function to fetch data using JSONP
-        function fetchData() {
-            const loadingIndicator = document.getElementById('loading');
-            loadingIndicator.style.display = 'flex';
-
-            // Create a unique callback function name to avoid conflicts
-            const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
-            
-            // Define the callback function on the window object
-            window[callbackName] = function(data) {
-                // Data has been received, process it
-                if (data && data.success) {
-                    displayItems(data.items);
-                } else {
-                    handleFetchError();
-                }
-
-                // Clean up: remove the script tag and the callback function
-                document.body.removeChild(script);
-                delete window[callbackName];
-            };
-
-            // Create a script tag to make the JSONP request
-            const script = document.createElement('script');
-            script.src = SCRIPT_URL + '?callback=' + callbackName;
-            
-            // Handle errors, e.g., if the script fails to load
-            script.onerror = function() {
-                handleFetchError();
-                
-                // Clean up on error
-                document.body.removeChild(script);
-                delete window[callbackName];
-            };
-            
-            // Append the script to the body to trigger the request
-            document.body.appendChild(script);
-        }
-        
-        function handleFetchError() {
-            const loadingIndicator = document.getElementById('loading');
-            loadingIndicator.style.display = 'none';
-            const noItemsMessage = document.getElementById('no-items');
-            noItemsMessage.classList.remove('hidden');
-            noItemsMessage.textContent = 'เกิดข้อผิดพลาด: ไม่สามารถโหลดข้อมูลได้';
-        }
-
-        // 2. Function to display items on the page
-        function displayItems(items) {
-            const container = document.getElementById('items-container');
-            const loadingIndicator = document.getElementById('loading');
-            const noItemsMessage = document.getElementById('no-items');
-            
-            // Clear previous content
-            container.innerHTML = '';
-            loadingIndicator.style.display = 'none';
-
-            if (!items || items.length === 0) {
-                noItemsMessage.classList.remove('hidden');
+        // เริ่มทำงานเมื่อโหลดหน้าเว็บ
+        document.addEventListener('DOMContentLoaded', () => {
+            if(SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbypPs2PQ2SVU_EkF2bm-bgND44X0MXyfpy2G_SiHR8omDs4jxw90LZPEfeGuKtmGHpwpA/exec') {
+                Swal.fire('แจ้งเตือน', 'กรุณาใส่ URL ของ Web App ในโค้ด HTML บรรทัดที่ 87 ก่อนครับ', 'warning');
                 return;
             }
+            fetchData();
+        });
+
+        // ฟังก์ชันดึงข้อมูลผ่าน JSONP
+        function fetchData() {
+            const callbackName = 'cb_' + Math.round(Date.now());
             
-            noItemsMessage.classList.add('hidden');
+            window[callbackName] = (data) => {
+                document.getElementById('loading').classList.add('hidden');
+                if (data.success) {
+                    allItems = data.items;
+                    renderItems(allItems); // แสดงทั้งหมดก่อน
+                } else {
+                    Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', 'error');
+                }
+                delete window[callbackName];
+                document.body.removeChild(script);
+            };
 
-            // Save data for later use in modals
-            itemsData = items;
+            const script = document.createElement('script');
+            script.src = `${SCRIPT_URL}?callback=${callbackName}`;
+            script.onerror = () => {
+                document.getElementById('loading').classList.add('hidden');
+                Swal.fire('Connection Error', 'ไม่สามารถเชื่อมต่อกับฐานข้อมูลได้', 'error');
+            };
+            document.body.appendChild(script);
+        }
 
-            items.forEach((item, index) => {
-                // Create the card element
-                const card = document.createElement('div');
-                card.className = 'bg-white rounded-xl shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 ease-in-out';
-                
-                // Format date for display
-                const foundDate = new Date(item.dateTimeFound).toLocaleString('th-TH', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+        // ฟังก์ชันกรองข้อมูล (Filter)
+        function filterItems(category) {
+            // จัดการปุ่ม Active
+            document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
+            
+            let filteredData = [];
+            
+            if (category === 'all') {
+                document.getElementById('btn-all').classList.add('active');
+                filteredData = allItems;
+            } else if (category === 'แจ้งพบสิ่งของ') {
+                // กรองเฉพาะข้อมูลที่มี category ตรงกับ "แจ้งพบสิ่งของ"
+                document.getElementById('btn-found').classList.add('active');
+                filteredData = allItems.filter(item => item.category === 'แจ้งพบสิ่งของ');
+            } else if (category === 'ตามหาสิ่งของสูญหาย') {
+                // กรองเฉพาะข้อมูลที่มี category ตรงกับ "ตามหาสิ่งของสูญหาย"
+                document.getElementById('btn-lost').classList.add('active');
+                filteredData = allItems.filter(item => item.category === 'ตามหาสิ่งของสูญหาย');
+            }
+
+            renderItems(filteredData);
+        }
+
+        // ฟังก์ชันแสดงผลการ์ด (Render)
+        function renderItems(items) {
+            const grid = document.getElementById('items-grid');
+            const emptyState = document.getElementById('empty-state');
+            
+            grid.innerHTML = '';
+            
+            if (items.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.classList.remove('hidden');
+
+            items.forEach(item => {
+                // กำหนดธีมสีและข้อความ badge ตามประเภท
+                const isFound = item.category === 'แจ้งพบสิ่งของ';
+                const badgeText = isFound ? 'เจอของ' : 'ของหาย'; // ข้อความในป้ายกำกับบนรูป
+                const badgeColor = isFound ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
+                const cardBorder = isFound ? 'border-emerald-100' : 'border-rose-100';
+                const btnColor = isFound ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-rose-500 hover:bg-rose-600';
+
+                // แปลงวันที่ให้สวยงาม
+                const dateObj = new Date(item.dateTime);
+                const dateStr = isNaN(dateObj) ? item.dateTime : dateObj.toLocaleDateString('th-TH', {
+                    day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute:'2-digit'
                 });
 
+                const card = document.createElement('div');
+                card.className = `card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition border ${cardBorder} flex flex-col`;
+                
                 card.innerHTML = `
-                    <img class="card-img" src="${item.imageUrl}" alt="รูปของ: ${item.itemName}" onerror="this.onerror=null;this.src='https://placehold.co/600x400/E2E8F0/475569?text=ไม่มีรูปภาพ';">
-                    <div class="p-5">
-                        <h3 class="text-lg font-semibold text-slate-800 truncate">${item.itemName}</h3>
-                        <p class="text-sm text-slate-500 mt-1">พบเมื่อ: ${foundDate}</p>
-                        <button 
-                            class="mt-4 w-full bg-sky-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-opacity-75 transition-colors"
-                            onclick="showDetails(${index})">
+                    <div class="card-img-container">
+                        <span class="absolute top-3 right-3 ${badgeColor} text-xs px-2 py-1 rounded-full font-medium shadow-sm z-10">
+                            ${badgeText}
+                        </span>
+                        <img src="${item.imageUrl}" 
+                             class="card-img cursor-pointer" 
+                             alt="${item.itemName}"
+                             onerror="this.src='https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image'; this.classList.add('opacity-50');"
+                             onclick='openModal(${JSON.stringify(item).replace(/'/g, "&#39;")})'
+                        >
+                    </div>
+                    <div class="p-4 flex flex-col flex-grow">
+                        <h3 class="text-lg font-bold text-slate-800 mb-1 line-clamp-1">${item.itemName}</h3>
+                        <div class="flex items-center gap-2 text-sm text-slate-500 mb-4">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            ${dateStr}
+                        </div>
+                        <button onclick='openModal(${JSON.stringify(item).replace(/'/g, "&#39;")})' 
+                                class="mt-auto w-full ${btnColor} text-white py-2 rounded-xl font-medium transition shadow-sm text-sm flex items-center justify-center gap-2">
                             คลิกดูรายละเอียด
                         </button>
                     </div>
                 `;
-                container.appendChild(card);
+                grid.appendChild(card);
             });
         }
 
-        // 3. Function to show item details in a SweetAlert2 modal
-        function showDetails(index) {
-            const item = itemsData[index];
-            if (!item) return;
-
-            const foundDate = new Date(item.dateTimeFound).toLocaleString('th-TH', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: 'Asia/Bangkok'
-            });
+        // ฟังก์ชันเปิด Modal รายละเอียด
+        function openModal(item) {
+            const isFound = item.category === 'แจ้งพบสิ่งของ';
+            const dateStr = new Date(item.dateTime).toLocaleString('th-TH', { dateStyle: 'long', timeStyle: 'short' });
             
-            // Determine status color
-            let statusColor = 'text-yellow-500'; // Default for 'รอรับคืน'
-            if (item.status === 'รับคืนแล้ว') {
-                statusColor = 'text-green-500';
-            } else if (item.status === 'นำส่งตำรวจ/อื่นๆ') {
-                statusColor = 'text-blue-500';
-            }
-
+            // กำหนดสีสถานะ
+            let statusColor = 'text-orange-500';
+            if(item.status === 'รับคืนแล้ว') statusColor = 'text-green-600';
+            
             Swal.fire({
-                title: `<strong class="text-2xl">${item.itemName}</strong>`,
                 html: `
-                    <div class="text-left space-y-3 p-4">
-                        <img src="${item.imageUrl}" alt="รูปของ: ${item.itemName}" class="w-full rounded-lg mb-4 max-h-80 object-contain" onerror="this.onerror=null;this.src='https://placehold.co/600x400/E2E8F0/475569?text=ไม่มีรูปภาพ';">
-                        <p><strong>รายละเอียด:</strong> ${item.description || 'ไม่มีข้อมูล'}</p>
-                        <p><strong>วันที่พบ:</strong> ${foundDate}</p>
-                        <p><strong>สถานที่:</strong> ${item.locationFound || 'ไม่มีข้อมูล'}</p>
-                        <p><strong>สถานะ:</strong> <span class="font-bold ${statusColor}">${item.status || 'รอรับคืน'}</span></p>
+                    <div class="text-left">
+                        <div class="rounded-xl overflow-hidden mb-4 bg-slate-100 border border-slate-200">
+                             <img src="${item.imageUrl}" class="w-full max-h-[300px] object-contain mx-auto" 
+                                  onerror="this.src='https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image'">
+                        </div>
+                        
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2">${item.itemName}</h2>
+                        <div class="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 ${isFound ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                            ${item.category}
+                        </div>
+
+                        <div class="space-y-3 text-sm text-slate-600">
+                            <div class="flex gap-3">
+                                <span class="font-semibold w-20 shrink-0 text-slate-800">วันเวลา:</span>
+                                <span>${dateStr}</span>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="font-semibold w-20 shrink-0 text-slate-800">สถานที่:</span>
+                                <span>${item.location || '-'}</span>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="font-semibold w-20 shrink-0 text-slate-800">รายละเอียด:</span>
+                                <span>${item.description || '-'}</span>
+                            </div>
+                            <div class="flex gap-3 items-center pt-2 border-t">
+                                <span class="font-semibold w-20 shrink-0 text-slate-800">สถานะ:</span>
+                                <span class="font-bold text-lg ${statusColor}">${item.status || 'รอติดต่อ'}</span>
+                            </div>
+                        </div>
                     </div>
                 `,
-                confirmButtonText: 'ปิด',
-                confirmButtonColor: '#3b82f6',
-                width: '90%',
-                maxWidth: '600px',
+                showConfirmButton: false,
+                showCloseButton: true,
+                width: '100%',
+                maxWidth: '500px',
+                customClass: {
+                    popup: 'rounded-3xl'
+                }
             });
         }
-
-        // 4. Initial data load when the page is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            // !!! CORRECTED !!!
-            // This now correctly checks for the placeholder text.
-            if (SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-                 const loadingIndicator = document.getElementById('loading');
-                 loadingIndicator.style.display = 'none';
-                 const container = document.getElementById('items-container');
-                 container.innerHTML = `
-                    <div class="col-span-full text-center bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg" role="alert">
-                        <strong class="font-bold">ติดตั้งไม่สำเร็จ!</strong>
-                        <span class="block sm:inline">กรุณาใส่ URL ของ Google Apps Script ในไฟล์ HTML ก่อน</span>
-                    </div>
-                 `;
-            } else {
-                fetchData();
-            }
-        });
     </script>
-
 </body>
 </html>
+```eof
