@@ -33,7 +33,6 @@
     <header class="bg-white shadow-sm sticky top-0 z-10">
         <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between">
             <div class="flex items-center gap-3 mb-4 md:mb-0">
-                <!-- Logo Placeholder (Optional) -->
                 <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl">W</div>
                 <div>
                     <h1 class="text-2xl font-bold text-slate-800 leading-none">ของหายได้คืน</h1>
@@ -41,19 +40,19 @@
                 </div>
             </div>
             
-            <!-- Filter Buttons -->
+            <!-- Filter Buttons: แก้ไขให้ส่งคีย์เวิร์ดภาษาไทยโดยตรง -->
             <div class="flex flex-wrap justify-center gap-2">
-                <button onclick="filterItems('all')" id="btn-all" class="btn-filter btn-all active px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-blue-50 transition text-sm font-medium">
+                <button onclick="filterItems('ทั้งหมด')" id="btn-all" class="btn-filter btn-all active px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-blue-50 transition text-sm font-medium">
                     ทั้งหมด
                 </button>
                 
-                <!-- ปุ่มที่ 1: กรอง "แจ้งพบสิ่งของ" (ใช้ keyword 'found') -->
-                <button onclick="filterItems('found')" id="btn-found" class="btn-filter btn-found px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-emerald-50 transition text-sm font-medium flex items-center gap-1">
+                <!-- ปุ่มกรอง "พบ" -->
+                <button onclick="filterItems('พบ')" id="btn-found" class="btn-filter btn-found px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-emerald-50 transition text-sm font-medium flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span> สิ่งของที่มีผู้นำมามอบ
                 </button>
                 
-                <!-- ปุ่มที่ 2: กรอง "ตามหาสิ่งของสูญหาย" (ใช้ keyword 'lost') -->
-                <button onclick="filterItems('lost')" id="btn-lost" class="btn-filter btn-lost px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-rose-50 transition text-sm font-medium flex items-center gap-1">
+                <!-- ปุ่มกรอง "หาย" -->
+                <button onclick="filterItems('หาย')" id="btn-lost" class="btn-filter btn-lost px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-rose-50 transition text-sm font-medium flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-rose-500"></span> ตามหาสิ่งของสูญหาย
                 </button>
             </div>
@@ -70,9 +69,7 @@
         </div>
 
         <!-- Grid Container -->
-        <div id="items-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 hidden">
-            <!-- Cards will be injected here -->
-        </div>
+        <div id="items-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 hidden"></div>
 
         <!-- Empty State -->
         <div id="empty-state" class="hidden text-center py-20">
@@ -80,22 +77,21 @@
                 <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
             </div>
             <p class="text-slate-500 text-lg">ไม่พบข้อมูลในหมวดหมู่นี้</p>
-            <p id="debug-categories" class="text-xs text-slate-400 mt-2"></p>
+            <p id="debug-msg" class="text-xs text-slate-400 mt-2"></p>
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="bg-white border-t py-6 text-center text-slate-400 text-sm">
         <p>© ระบบของหายได้คืน มหาวิทยาลัยวลัยลักษณ์</p>
     </footer>
 
     <script>
         // ------------------------------------------------------
-        // 1. ตั้งค่า URL (สำคัญ: ใส่ URL ที่ได้จากการ Deploy ตรงนี้)
+        // 1. ตั้งค่า URL (ใส่ URL เดิมของคุณที่นี่)
         // ------------------------------------------------------
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbypPs2PQ2SVU_EkF2bm-bgND44X0MXyfpy2G_SiHR8omDs4jxw90LZPEfeGuKtmGHpwpA/exec'; 
 
-        let allItems = []; // ตัวแปรเก็บข้อมูลทั้งหมด
+        let allItems = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             if(SCRIPT_URL === 'YOUR_DEPLOYED_WEB_APP_URL_HERE') {
@@ -111,25 +107,14 @@
             window[callbackName] = (data) => {
                 document.getElementById('loading').classList.add('hidden');
                 if (data.success) {
-                    // ทำความสะอาดข้อมูล
+                    // Clean Data
                     allItems = data.items.map(item => ({
                         ...item,
-                        category: item.category ? item.category.toString().trim() : ''
+                        // แปลงเป็น string และตัดช่องว่าง เพื่อป้องกัน error
+                        category: item.category ? String(item.category).trim() : ''
                     }));
-
-                    // --- Debug: ตรวจสอบว่าในระบบมีหมวดหมู่อะไรบ้าง ---
-                    const categories = [...new Set(allItems.map(i => i.category))];
-                    console.log("Categories found in sheet:", categories);
                     
-                    // ถ้าโหลดมาแล้วไม่มีข้อมูลเลย หรือข้อมูลไม่มีหมวดหมู่ อาจจะแจ้งเตือน
-                    if (categories.length > 0) {
-                         // แสดงข้อมูลทั้งหมดก่อน
-                        renderItems(allItems);
-                    } else {
-                        document.getElementById('empty-state').classList.remove('hidden');
-                        document.getElementById('empty-state').querySelector('p').innerText = 'ไม่พบข้อมูลใน Sheet';
-                    }
-
+                    renderItems(allItems);
                 } else {
                     Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', 'error');
                 }
@@ -146,37 +131,38 @@
             document.body.appendChild(script);
         }
 
-        // ฟังก์ชันกรองข้อมูล (Filter) - แก้ไขให้ใช้ Keyword แทนการตรงกันเป๊ะๆ
-        function filterItems(filterType) {
+        // ฟังก์ชันกรองข้อมูล (รับค่าเป็นภาษาไทยตรงๆ: 'ทั้งหมด', 'พบ', 'หาย')
+        function filterItems(keyword) {
             // Reset ปุ่ม Active
             document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
             
             let filteredData = [];
             
-            if (filterType === 'all') {
+            if (keyword === 'ทั้งหมด') {
                 document.getElementById('btn-all').classList.add('active');
                 filteredData = allItems;
-            } 
-            else if (filterType === 'found') {
-                document.getElementById('btn-found').classList.add('active');
-                // กรองโดยหาคำว่า "พบ" ในหมวดหมู่ (เช่น "แจ้งพบสิ่งของ", "พบของ", "เก็บได้")
-                filteredData = allItems.filter(item => item.category.includes('พบ'));
-            } 
-            else if (filterType === 'lost') {
-                document.getElementById('btn-lost').classList.add('active');
-                // กรองโดยหาคำว่า "หาย" ในหมวดหมู่ (เช่น "ตามหาสิ่งของสูญหาย", "แจ้งของหาย", "ของหาย")
-                filteredData = allItems.filter(item => item.category.includes('หาย'));
+            } else {
+                // Highlight ปุ่มตามคีย์เวิร์ด
+                if (keyword === 'พบ') {
+                    document.getElementById('btn-found').classList.add('active');
+                } else if (keyword === 'หาย') {
+                    document.getElementById('btn-lost').classList.add('active');
+                }
+                
+                // *** การกรองข้อมูลที่สำคัญ ***
+                // ใช้ .includes(keyword) เพื่อหาคำว่า "พบ" หรือ "หาย" ในประโยค (เช่น "แจ้งพบสิ่งของ")
+                filteredData = allItems.filter(item => {
+                    return item.category && item.category.includes(keyword);
+                });
             }
 
-            // Debug: ถ้ากรองแล้วไม่เจอ ให้แสดงหมวดหมู่ที่มีอยู่จริงใน Console/หน้าจอ เพื่อช่วยตรวจสอบ
+            // ถ้าไม่เจอข้อมูล ให้แสดง Debug ช่วยตรวจสอบว่าในระบบมีหมวดหมู่อะไรบ้าง
             if (filteredData.length === 0 && allItems.length > 0) {
                 const existingCats = [...new Set(allItems.map(i => i.category))].join(', ');
-                console.warn("Filter result empty. Existing categories:", existingCats);
-                
-                // แสดงข้อความช่วยเหลือเล็กๆ ใต้ Empty State
-                document.getElementById('debug-categories').innerText = `(หมวดหมู่ที่มีในระบบจริง: ${existingCats})`;
+                console.warn(`Filter '${keyword}' empty. Found categories:`, existingCats);
+                document.getElementById('debug-msg').innerText = `(ค้นหาคำว่า: "${keyword}" แต่ข้อมูลที่มีคือ: ${existingCats})`;
             } else {
-                document.getElementById('debug-categories').innerText = '';
+                document.getElementById('debug-msg').innerText = '';
             }
 
             renderItems(filteredData);
@@ -198,7 +184,7 @@
             grid.classList.remove('hidden');
 
             items.forEach(item => {
-                // ตรวจสอบว่าเป็นประเภท "พบ" หรือ "หาย" โดยใช้ Keyword เหมือนกัน
+                // ตรวจสอบสถานะ พบ/หาย
                 const isFound = item.category.includes('พบ');
                 
                 const badgeText = isFound ? 'เจอของ' : 'ของหาย';
@@ -245,7 +231,6 @@
         function openModal(item) {
             const isFound = item.category.includes('พบ');
             const dateStr = new Date(item.dateTime).toLocaleString('th-TH', { dateStyle: 'long', timeStyle: 'short' });
-            
             let statusColor = 'text-orange-500';
             if(item.status === 'รับคืนแล้ว') statusColor = 'text-green-600';
             
@@ -256,12 +241,10 @@
                              <img src="${item.imageUrl}" class="w-full max-h-[300px] object-contain mx-auto" 
                                   onerror="this.src='https://placehold.co/600x400/f1f5f9/94a3b8?text=No+Image'">
                         </div>
-                        
                         <h2 class="text-2xl font-bold text-slate-800 mb-2">${item.itemName}</h2>
                         <div class="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 ${isFound ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
                             ${item.category}
                         </div>
-
                         <div class="space-y-3 text-sm text-slate-600">
                             <div class="flex gap-3">
                                 <span class="font-semibold w-20 shrink-0 text-slate-800">วันเวลา:</span>
@@ -286,11 +269,10 @@
                 showCloseButton: true,
                 width: '100%',
                 maxWidth: '500px',
-                customClass: {
-                    popup: 'rounded-3xl'
-                }
+                customClass: { popup: 'rounded-3xl' }
             });
         }
     </script>
 </body>
 </html>
+```
