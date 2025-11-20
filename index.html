@@ -92,13 +92,13 @@
         // ------------------------------------------------------
         // 1. ตั้งค่า URL (สำคัญ: ใส่ URL ที่ได้จากการ Deploy ตรงนี้)
         // ------------------------------------------------------
-        const SCRIPT_URL = 'YOUR_DEPLOYED_WEB_APP_URL_HERE'; 
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbypPs2PQ2SVU_EkF2bm-bgND44X0MXyfpy2G_SiHR8omDs4jxw90LZPEfeGuKtmGHpwpA/exec'; 
 
         let allItems = []; // ตัวแปรเก็บข้อมูลทั้งหมด
 
         // เริ่มทำงานเมื่อโหลดหน้าเว็บ
         document.addEventListener('DOMContentLoaded', () => {
-            if(SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbypPs2PQ2SVU_EkF2bm-bgND44X0MXyfpy2G_SiHR8omDs4jxw90LZPEfeGuKtmGHpwpA/exec') {
+            if(SCRIPT_URL === 'YOUR_DEPLOYED_WEB_APP_URL_HERE') {
                 Swal.fire('แจ้งเตือน', 'กรุณาใส่ URL ของ Web App ในโค้ด HTML บรรทัดที่ 87 ก่อนครับ', 'warning');
                 return;
             }
