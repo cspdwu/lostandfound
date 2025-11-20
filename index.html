@@ -47,13 +47,13 @@
                     ทั้งหมด
                 </button>
                 
-                <!-- ปุ่มที่ 1: กรอง "แจ้งพบสิ่งของ" -->
-                <button onclick="filterItems('แจ้งพบสิ่งของ')" id="btn-found" class="btn-filter btn-found px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-emerald-50 transition text-sm font-medium flex items-center gap-1">
+                <!-- ปุ่มที่ 1: กรอง "แจ้งพบสิ่งของ" (ใช้ keyword 'found') -->
+                <button onclick="filterItems('found')" id="btn-found" class="btn-filter btn-found px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-emerald-50 transition text-sm font-medium flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span> สิ่งของที่มีผู้นำมามอบ
                 </button>
                 
-                <!-- ปุ่มที่ 2: กรอง "ตามหาสิ่งของสูญหาย" -->
-                <button onclick="filterItems('ตามหาสิ่งของสูญหาย')" id="btn-lost" class="btn-filter btn-lost px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-rose-50 transition text-sm font-medium flex items-center gap-1">
+                <!-- ปุ่มที่ 2: กรอง "ตามหาสิ่งของสูญหาย" (ใช้ keyword 'lost') -->
+                <button onclick="filterItems('lost')" id="btn-lost" class="btn-filter btn-lost px-4 py-2 rounded-full border border-slate-300 text-slate-600 hover:bg-rose-50 transition text-sm font-medium flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-rose-500"></span> ตามหาสิ่งของสูญหาย
                 </button>
             </div>
@@ -80,6 +80,7 @@
                 <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
             </div>
             <p class="text-slate-500 text-lg">ไม่พบข้อมูลในหมวดหมู่นี้</p>
+            <p id="debug-categories" class="text-xs text-slate-400 mt-2"></p>
         </div>
     </main>
 
@@ -96,7 +97,6 @@
 
         let allItems = []; // ตัวแปรเก็บข้อมูลทั้งหมด
 
-        // เริ่มทำงานเมื่อโหลดหน้าเว็บ
         document.addEventListener('DOMContentLoaded', () => {
             if(SCRIPT_URL === 'YOUR_DEPLOYED_WEB_APP_URL_HERE') {
                 Swal.fire('แจ้งเตือน', 'กรุณาใส่ URL ของ Web App ในโค้ด HTML บรรทัดที่ 87 ก่อนครับ', 'warning');
@@ -105,22 +105,31 @@
             fetchData();
         });
 
-        // ฟังก์ชันดึงข้อมูลผ่าน JSONP
         function fetchData() {
             const callbackName = 'cb_' + Math.round(Date.now());
             
             window[callbackName] = (data) => {
                 document.getElementById('loading').classList.add('hidden');
                 if (data.success) {
-                    // *** แก้ไขสำคัญ: ทำความสะอาดข้อมูล (Trim) ตัดช่องว่างหน้า-หลังออก ***
+                    // ทำความสะอาดข้อมูล
                     allItems = data.items.map(item => ({
                         ...item,
-                        category: item.category ? item.category.trim() : ''
+                        category: item.category ? item.category.toString().trim() : ''
                     }));
 
-                    console.log("Loaded categories:", allItems.map(i => i.category)); // Debug ดูว่าข้อมูลมาถูกต้องไหม
+                    // --- Debug: ตรวจสอบว่าในระบบมีหมวดหมู่อะไรบ้าง ---
+                    const categories = [...new Set(allItems.map(i => i.category))];
+                    console.log("Categories found in sheet:", categories);
+                    
+                    // ถ้าโหลดมาแล้วไม่มีข้อมูลเลย หรือข้อมูลไม่มีหมวดหมู่ อาจจะแจ้งเตือน
+                    if (categories.length > 0) {
+                         // แสดงข้อมูลทั้งหมดก่อน
+                        renderItems(allItems);
+                    } else {
+                        document.getElementById('empty-state').classList.remove('hidden');
+                        document.getElementById('empty-state').querySelector('p').innerText = 'ไม่พบข้อมูลใน Sheet';
+                    }
 
-                    renderItems(allItems); // แสดงทั้งหมดก่อน
                 } else {
                     Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', 'error');
                 }
@@ -137,30 +146,42 @@
             document.body.appendChild(script);
         }
 
-        // ฟังก์ชันกรองข้อมูล (Filter)
-        function filterItems(category) {
-            // จัดการปุ่ม Active
+        // ฟังก์ชันกรองข้อมูล (Filter) - แก้ไขให้ใช้ Keyword แทนการตรงกันเป๊ะๆ
+        function filterItems(filterType) {
+            // Reset ปุ่ม Active
             document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
             
             let filteredData = [];
             
-            if (category === 'all') {
+            if (filterType === 'all') {
                 document.getElementById('btn-all').classList.add('active');
                 filteredData = allItems;
-            } else if (category === 'แจ้งพบสิ่งของ') {
-                // กรองเฉพาะข้อมูลที่มี category ตรงกับ "แจ้งพบสิ่งของ"
+            } 
+            else if (filterType === 'found') {
                 document.getElementById('btn-found').classList.add('active');
-                filteredData = allItems.filter(item => item.category === 'แจ้งพบสิ่งของ');
-            } else if (category === 'ตามหาสิ่งของสูญหาย') {
-                // กรองเฉพาะข้อมูลที่มี category ตรงกับ "ตามหาสิ่งของสูญหาย"
+                // กรองโดยหาคำว่า "พบ" ในหมวดหมู่ (เช่น "แจ้งพบสิ่งของ", "พบของ", "เก็บได้")
+                filteredData = allItems.filter(item => item.category.includes('พบ'));
+            } 
+            else if (filterType === 'lost') {
                 document.getElementById('btn-lost').classList.add('active');
-                filteredData = allItems.filter(item => item.category === 'ตามหาสิ่งของสูญหาย');
+                // กรองโดยหาคำว่า "หาย" ในหมวดหมู่ (เช่น "ตามหาสิ่งของสูญหาย", "แจ้งของหาย", "ของหาย")
+                filteredData = allItems.filter(item => item.category.includes('หาย'));
+            }
+
+            // Debug: ถ้ากรองแล้วไม่เจอ ให้แสดงหมวดหมู่ที่มีอยู่จริงใน Console/หน้าจอ เพื่อช่วยตรวจสอบ
+            if (filteredData.length === 0 && allItems.length > 0) {
+                const existingCats = [...new Set(allItems.map(i => i.category))].join(', ');
+                console.warn("Filter result empty. Existing categories:", existingCats);
+                
+                // แสดงข้อความช่วยเหลือเล็กๆ ใต้ Empty State
+                document.getElementById('debug-categories').innerText = `(หมวดหมู่ที่มีในระบบจริง: ${existingCats})`;
+            } else {
+                document.getElementById('debug-categories').innerText = '';
             }
 
             renderItems(filteredData);
         }
 
-        // ฟังก์ชันแสดงผลการ์ด (Render)
         function renderItems(items) {
             const grid = document.getElementById('items-grid');
             const emptyState = document.getElementById('empty-state');
@@ -177,14 +198,14 @@
             grid.classList.remove('hidden');
 
             items.forEach(item => {
-                // กำหนดธีมสีและข้อความ badge ตามประเภท
-                const isFound = item.category === 'แจ้งพบสิ่งของ';
-                const badgeText = isFound ? 'เจอของ' : 'ของหาย'; // ข้อความในป้ายกำกับบนรูป
+                // ตรวจสอบว่าเป็นประเภท "พบ" หรือ "หาย" โดยใช้ Keyword เหมือนกัน
+                const isFound = item.category.includes('พบ');
+                
+                const badgeText = isFound ? 'เจอของ' : 'ของหาย';
                 const badgeColor = isFound ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
                 const cardBorder = isFound ? 'border-emerald-100' : 'border-rose-100';
                 const btnColor = isFound ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-rose-500 hover:bg-rose-600';
 
-                // แปลงวันที่ให้สวยงาม
                 const dateObj = new Date(item.dateTime);
                 const dateStr = isNaN(dateObj) ? item.dateTime : dateObj.toLocaleDateString('th-TH', {
                     day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute:'2-digit'
@@ -221,12 +242,10 @@
             });
         }
 
-        // ฟังก์ชันเปิด Modal รายละเอียด
         function openModal(item) {
-            const isFound = item.category === 'แจ้งพบสิ่งของ';
+            const isFound = item.category.includes('พบ');
             const dateStr = new Date(item.dateTime).toLocaleString('th-TH', { dateStyle: 'long', timeStyle: 'short' });
             
-            // กำหนดสีสถานะ
             let statusColor = 'text-orange-500';
             if(item.status === 'รับคืนแล้ว') statusColor = 'text-green-600';
             
@@ -275,4 +294,3 @@
     </script>
 </body>
 </html>
-```eof
