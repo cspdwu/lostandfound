@@ -112,7 +112,14 @@
             window[callbackName] = (data) => {
                 document.getElementById('loading').classList.add('hidden');
                 if (data.success) {
-                    allItems = data.items;
+                    // *** แก้ไขสำคัญ: ทำความสะอาดข้อมูล (Trim) ตัดช่องว่างหน้า-หลังออก ***
+                    allItems = data.items.map(item => ({
+                        ...item,
+                        category: item.category ? item.category.trim() : ''
+                    }));
+
+                    console.log("Loaded categories:", allItems.map(i => i.category)); // Debug ดูว่าข้อมูลมาถูกต้องไหม
+
                     renderItems(allItems); // แสดงทั้งหมดก่อน
                 } else {
                     Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', 'error');
